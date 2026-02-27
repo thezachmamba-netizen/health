@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zach — Health Dashboard</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+  
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0a0a0f;
+    color: #e0e0e0;
+    min-height: 100vh;
+    padding: 32px 20px;
+  }
+
+  .container { max-width: 480px; margin: 0 auto; }
+
+  h1 {
+    font-size: 24px;
+    font-weight: 300;
+    letter-spacing: -0.5px;
+    margin-bottom: 4px;
+    color: #fff;
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 32px;
+  }
+
+  .subtitle span { color: #4ade80; font-weight: 500; }
+
+  /* Streak Cards */
+  .streak-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+
+  .streak-card {
+    background: linear-gradient(135deg, #141420 0%, #1a1a2e 100%);
+    border: 1px solid #222240;
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .streak-card::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    filter: blur(50px);
+    opacity: 0.12;
+  }
+
+  .streak-card.sober::after { background: #4ade80; }
+  .streak-card.nicotine::after { background: #60a5fa; }
+  .streak-card.exercise::after { background: #f59e0b; }
+  .streak-card.faith::after { background: #c084fc; }
+
+  .streak-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #666;
+    margin-bottom: 10px;
+  }
+
+  .streak-number {
+    font-size: 48px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+
+  .streak-card.sober .streak-number { color: #4ade80; }
+  .streak-card.nicotine .streak-number { color: #60a5fa; }
+  .streak-card.exercise .streak-number { color: #f59e0b; }
+  .streak-card.faith .streak-number { color: #c084fc; }
+
+  .streak-unit {
+    font-size: 13px;
+    color: #555;
+  }
+
+  .streak-best {
+    font-size: 10px;
+    color: #444;
+    margin-top: 10px;
+  }
+
+  .streak-best span { color: #666; }
+
+  /* Section Title */
+  .section-title {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #444;
+    margin-bottom: 14px;
+  }
+
+  /* Heatmap */
+  .heatmap-section { margin-bottom: 32px; }
+
+  .heatmap-months {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    padding: 0 2px;
+  }
+
+  .heatmap-months span {
+    font-size: 10px;
+    color: #444;
+  }
+
+  .heatmap-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+  }
+
+  .heatmap-day {
+    aspect-ratio: 1;
+    border-radius: 3px;
+    background: #141420;
+    border: 1px solid #1e1e35;
+    position: relative;
+    min-height: 16px;
+  }
+
+  .heatmap-day.level-1 { background: #1a3a2a; border-color: #254d37; }
+  .heatmap-day.level-2 { background: #22543d; border-color: #2f7a56; }
+  .heatmap-day.level-3 { background: #276749; border-color: #38a169; box-shadow: 0 0 4px rgba(74, 222, 128, 0.15); }
+  .heatmap-day.today { outline: 2px solid #4ade80; outline-offset: 1px; }
+  .heatmap-day.future { background: #0d0d15; border-color: #151525; }
+
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: 10px;
+    color: #444;
+  }
+
+  .legend-box {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+
+  /* Stats */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .stat-card {
+    background: #141420;
+    border: 1px solid #1e1e35;
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-value {
+    font-size: 22px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 2px;
+  }
+
+  .stat-label {
+    font-size: 10px;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
+  /* Weekly */
+  .weekly {
+    background: #141420;
+    border: 1px solid #1e1e35;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 32px;
+  }
+
+  .week-row {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+  }
+
+  .day-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .day-label {
+    font-size: 10px;
+    color: #444;
+    font-weight: 500;
+  }
+
+  .day-ring {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2.5px solid #1e1e35;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.3s ease;
+  }
+
+  .day-ring.done { border-color: #4ade80; color: #4ade80; }
+  .day-ring.partial { border-color: #f59e0b; color: #f59e0b; }
+  .day-ring.missed { border-color: #ef4444; color: #ef4444; }
+  .day-ring.today-ring { border-color: #4ade80; animation: pulse 2s ease-in-out infinite; }
+  .day-ring.today-ring span { color: #4ade80; font-size: 9px; font-weight: 600; letter-spacing: 0.5px; }
+
+  /* Milestones */
+  .milestones {
+    margin-bottom: 32px;
+  }
+
+  .milestone {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    background: #141420;
+    border: 1px solid #1e1e35;
+    border-radius: 12px;
+    margin-bottom: 8px;
+  }
+
+  .milestone-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .milestone-icon.locked { background: #1a1a2e; color: #444; }
+  .milestone-icon.unlocked { background: #1a3a2a; color: #4ade80; }
+
+  .milestone-info { flex: 1; }
+
+  .milestone-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: #ccc;
+  }
+
+  .milestone-desc {
+    font-size: 11px;
+    color: #555;
+    margin-top: 2px;
+  }
+
+  .milestone-progress {
+    width: 100%;
+    height: 3px;
+    background: #1e1e35;
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+
+  .milestone-progress-bar {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #4ade80, #22d3ee);
+    transition: width 0.5s ease;
+  }
+
+  /* Quote */
+  .quote-section {
+    text-align: center;
+    padding: 24px 16px;
+    border-top: 1px solid #1a1a2e;
+  }
+
+  .quote-text {
+    font-size: 14px;
+    font-style: italic;
+    color: #555;
+    line-height: 1.6;
+  }
+
+  .quote-attr {
+    font-size: 11px;
+    color: #333;
+    margin-top: 8px;
+    font-style: normal;
+  }
+
+  /* Animations */
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.25); }
+    50% { box-shadow: 0 0 0 6px rgba(74, 222, 128, 0); }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .streak-card, .stat-card, .milestone, .weekly {
+    animation: fadeIn 0.4s ease both;
+  }
+  .streak-card:nth-child(1) { animation-delay: 0.05s; }
+  .streak-card:nth-child(2) { animation-delay: 0.1s; }
+  .streak-card:nth-child(3) { animation-delay: 0.15s; }
+  .streak-card:nth-child(4) { animation-delay: 0.2s; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Health</h1>
+  <p class="subtitle">Started <span>February 27, 2026</span></p>
+
+  <div class="streak-cards">
+    <div class="streak-card sober">
+      <div class="streak-label">Sober</div>
+      <div class="streak-number" id="soberCount">0</div>
+      <div class="streak-unit">days</div>
+      <div class="streak-best">Best: <span id="soberBest">--</span></div>
+    </div>
+    <div class="streak-card nicotine">
+      <div class="streak-label">Nicotine Free</div>
+      <div class="streak-number" id="nicCount">0</div>
+      <div class="streak-unit">days</div>
+      <div class="streak-best">Best: <span id="nicBest">--</span></div>
+    </div>
+    <div class="streak-card exercise">
+      <div class="streak-label">Exercise</div>
+      <div class="streak-number" id="exCount">0</div>
+      <div class="streak-unit">this week</div>
+      <div class="streak-best">Goal: <span>4x/week</span></div>
+    </div>
+    <div class="streak-card faith">
+      <div class="streak-label">Bible Reading</div>
+      <div class="streak-number" id="faithCount">0</div>
+      <div class="streak-unit">days</div>
+      <div class="streak-best">Best: <span id="faithBest">--</span></div>
+    </div>
+  </div>
+
+  <div class="section-title">February 2026</div>
+  <div class="heatmap-section">
+    <div class="heatmap-months">
+      <span>S</span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span>
+    </div>
+    <div class="heatmap-grid" id="heatmap"></div>
+    <div class="heatmap-legend">
+      <span>Less</span>
+      <div class="legend-box" style="background:#141420; border:1px solid #1e1e35;"></div>
+      <div class="legend-box" style="background:#1a3a2a;"></div>
+      <div class="legend-box" style="background:#22543d;"></div>
+      <div class="legend-box" style="background:#276749;"></div>
+      <span>More</span>
+    </div>
+  </div>
+
+  <div class="section-title">This Week</div>
+  <div class="weekly">
+    <div class="week-row">
+      <div class="day-col">
+        <div class="day-label">M</div>
+        <div class="day-ring">--</div>
+      </div>
+      <div class="day-col">
+        <div class="day-label">T</div>
+        <div class="day-ring">--</div>
+      </div>
+      <div class="day-col">
+        <div class="day-label">W</div>
+        <div class="day-ring">--</div>
+      </div>
+      <div class="day-col">
+        <div class="day-label">T</div>
+        <div class="day-ring">--</div>
+      </div>
+      <div class="day-col">
+        <div class="day-label">F</div>
+        <div class="day-ring today-ring"><span>NOW</span></div>
+      </div>
+      <div class="day-col">
+        <div class="day-label">S</div>
+        <div class="day-ring">--</div>
+      </div>
+      <div class="day-col">
+        <div class="day-label">S</div>
+        <div class="day-ring">--</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">Stats</div>
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-value" id="cleanDays">0</div>
+      <div class="stat-label">Clean Days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="longestStreak">0</div>
+      <div class="stat-label">Best Streak</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" id="successRate">0%</div>
+      <div class="stat-label">Success Rate</div>
+    </div>
+  </div>
+
+  <div class="section-title">Milestones</div>
+  <div class="milestones">
+    <div class="milestone">
+      <div class="milestone-icon locked">1</div>
+      <div class="milestone-info">
+        <div class="milestone-name">Day 1 — The Decision</div>
+        <div class="milestone-desc">You showed up. That's the hardest part.</div>
+        <div class="milestone-progress"><div class="milestone-progress-bar" style="width: 0%"></div></div>
+      </div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-icon locked">7</div>
+      <div class="milestone-info">
+        <div class="milestone-name">One Week</div>
+        <div class="milestone-desc">Your body starts to reset.</div>
+        <div class="milestone-progress"><div class="milestone-progress-bar" style="width: 0%"></div></div>
+      </div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-icon locked">30</div>
+      <div class="milestone-info">
+        <div class="milestone-name">One Month</div>
+        <div class="milestone-desc">New habits are forming. This is who you are now.</div>
+        <div class="milestone-progress"><div class="milestone-progress-bar" style="width: 0%"></div></div>
+      </div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-icon locked">90</div>
+      <div class="milestone-info">
+        <div class="milestone-name">90 Days</div>
+        <div class="milestone-desc">Real transformation. Claire sees a different man.</div>
+        <div class="milestone-progress"><div class="milestone-progress-bar" style="width: 0%"></div></div>
+      </div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-icon locked">&#9829;</div>
+      <div class="milestone-info">
+        <div class="milestone-name">Proposal Day — Clean</div>
+        <div class="milestone-desc">Walk into the biggest moment of your life at your best.</div>
+        <div class="milestone-progress"><div class="milestone-progress-bar" style="width: 0%"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="quote-section">
+    <div class="quote-text">"Realize how lucky you got and live forward like you got off so lucky."</div>
+    <div class="quote-attr">— Z.M.</div>
+  </div>
+</div>
+
+<script>
+  // Generate heatmap for Feb 2026
+  // Feb 2026 starts on Sunday
+  const heatmap = document.getElementById('heatmap');
+  const today = 27;
+  const daysInMonth = 28;
+  const startDay = 0; // Sunday
+  
+  for (let i = 0; i < startDay; i++) {
+    const blank = document.createElement('div');
+    blank.style.visibility = 'hidden';
+    blank.className = 'heatmap-day';
+    heatmap.appendChild(blank);
+  }
+  
+  for (let i = 1; i <= daysInMonth; i++) {
+    const day = document.createElement('div');
+    day.className = 'heatmap-day';
+    if (i === today) day.classList.add('today');
+    else if (i > today) day.classList.add('future');
+    day.title = `Feb ${i}`;
+    heatmap.appendChild(day);
+  }
+</script>
+</body>
+</html>
